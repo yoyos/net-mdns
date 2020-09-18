@@ -17,7 +17,7 @@ namespace Makaretu.Dns
     /// </summary>
     class MulticastClient : IDisposable
     {
-        static readonly ILog log = LogManager.GetLogger(typeof(MulticastClient));
+        private static readonly ILog log = LogManager.GetLogger(typeof(MulticastClient));
 
         /// <summary>
         ///   The port number assigned to Multicast DNS.
@@ -27,13 +27,13 @@ namespace Makaretu.Dns
         /// </value>
         public static readonly int MulticastPort = 5353;
 
-        static readonly IPAddress MulticastAddressIp4 = IPAddress.Parse("224.0.0.251");
-        static readonly IPAddress MulticastAddressIp6 = IPAddress.Parse("FF02::FB");
-        static readonly IPEndPoint MdnsEndpointIp6 = new IPEndPoint(MulticastAddressIp6, MulticastPort);
-        static readonly IPEndPoint MdnsEndpointIp4 = new IPEndPoint(MulticastAddressIp4, MulticastPort);
+        private static readonly IPAddress MulticastAddressIp4 = IPAddress.Parse("224.0.0.251");
+        private static readonly IPAddress MulticastAddressIp6 = IPAddress.Parse("FF02::FB");
+        private static readonly IPEndPoint MdnsEndpointIp6 = new IPEndPoint(MulticastAddressIp6, MulticastPort);
+        private static readonly IPEndPoint MdnsEndpointIp4 = new IPEndPoint(MulticastAddressIp4, MulticastPort);
 
-        readonly List<UdpClient> receivers;
-        readonly ConcurrentDictionary<IPAddress, UdpClient> senders = new ConcurrentDictionary<IPAddress, UdpClient>();
+        private readonly List<UdpClient> receivers;
+        private readonly ConcurrentDictionary<IPAddress, UdpClient> senders = new ConcurrentDictionary<IPAddress, UdpClient>();
 
         public event EventHandler<UdpReceiveResult> MessageReceived;
 
@@ -116,7 +116,7 @@ namespace Makaretu.Dns
 
                     receivers.Add(sender);
 
-                    log.Debug($"Will send via {localEndpoint}");
+                    log.Debug($"Will send via {localEndpoint}"); 
                     if (!senders.TryAdd(address, sender)) // Should not fail
                     {
                         sender.Dispose();
@@ -161,7 +161,7 @@ namespace Makaretu.Dns
             }
         }
 
-        void Listen(UdpClient receiver)
+        private void Listen(UdpClient receiver)
         {
             // ReceiveAsync does not support cancellation.  So the receiver is disposed
             // to stop it. See https://github.com/dotnet/corefx/issues/9848
@@ -184,7 +184,7 @@ namespace Makaretu.Dns
             });
         }
 
-        IEnumerable<IPAddress> GetNetworkInterfaceLocalAddresses(NetworkInterface nic)
+        private IEnumerable<IPAddress> GetNetworkInterfaceLocalAddresses(NetworkInterface nic)
         {
             return nic
                 .GetIPProperties()

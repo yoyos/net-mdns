@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Common.Logging;
@@ -28,45 +26,44 @@ namespace Makaretu.Dns
     public class MulticastService : IResolver, IDisposable
     {
         // IP header (20 bytes for IPv4; 40 bytes for IPv6) and the UDP header(8 bytes).
-        const int packetOverhead = 48;
-        const int maxDatagramSize = Message.MaxLength;
+        private const int packetOverhead = 48;
+        private const int maxDatagramSize = Message.MaxLength;
 
-        static readonly TimeSpan maxLegacyUnicastTTL = TimeSpan.FromSeconds(10);
+        private static readonly TimeSpan maxLegacyUnicastTTL = TimeSpan.FromSeconds(10);
         static readonly ILog log = LogManager.GetLogger(typeof(MulticastService));
-        static readonly IPNetwork[] LinkLocalNetworks = new[] { IPNetwork.Parse("169.254.0.0/16"), IPNetwork.Parse("fe80::/10") };
 
-        List<NetworkInterface> knownNics = new List<NetworkInterface>();
-        int maxPacketSize;
+        private List<NetworkInterface> knownNics = new List<NetworkInterface>();
+        private int maxPacketSize;
 
         /// <summary>
         ///   Recently sent messages.
         /// </summary>
-        RecentMessages sentMessages = new RecentMessages();
+        private readonly RecentMessages sentMessages = new RecentMessages();
 
         /// <summary>
         ///   Recently received messages.
         /// </summary>
-        RecentMessages receivedMessages = new RecentMessages();
+        private readonly RecentMessages receivedMessages = new RecentMessages();
 
         /// <summary>
         ///   The multicast client.
         /// </summary>
-        MulticastClient client;
+        private MulticastClient client;
 
         /// <summary>
         ///   Use to send unicast IPv4 answers.
         /// </summary>
-        UdpClient unicastClientIp4 = new UdpClient(AddressFamily.InterNetwork);
+        private readonly UdpClient unicastClientIp4 = new UdpClient(AddressFamily.InterNetwork);
 
         /// <summary>
         ///   Use to send unicast IPv6 answers.
         /// </summary>
-        UdpClient unicastClientIp6 = new UdpClient(AddressFamily.InterNetworkV6);
+        private readonly UdpClient unicastClientIp6 = new UdpClient(AddressFamily.InterNetworkV6);
 
         /// <summary>
         ///   Function used for listening filtered network interfaces.
         /// </summary>
-        Func<IEnumerable<NetworkInterface>, IEnumerable<NetworkInterface>> networkInterfacesFilter;
+        private readonly Func<IEnumerable<NetworkInterface>, IEnumerable<NetworkInterface>> networkInterfacesFilter;
 
         /// <summary>
         ///   Set the default TTLs.
@@ -273,12 +270,12 @@ namespace Makaretu.Dns
             client = null;
         }
 
-        void OnNetworkAddressChanged(object sender, EventArgs e) => FindNetworkInterfaces();
+        private void OnNetworkAddressChanged(object sender, EventArgs e) => FindNetworkInterfaces();
 
-        void FindNetworkInterfaces()
+        private void FindNetworkInterfaces()
         {
             log.Debug("Finding network interfaces");
-
+            
             try
             {
                 var currentNics = GetNetworkInterfaces().ToList();
@@ -349,7 +346,7 @@ namespace Makaretu.Dns
         }
 
         /// <inheritdoc />
-        public Task<Message> ResolveAsync(Message request, CancellationToken cancel = default(CancellationToken))
+        public Task<Message> ResolveAsync(Message request, CancellationToken cancel = default)
         {
             var tsc = new TaskCompletionSource<Message>();
 
@@ -590,7 +587,7 @@ namespace Makaretu.Dns
             Send(answer, checkDuplicate, query.RemoteEndPoint);
         }
 
-        void Send(Message msg, bool checkDuplicate, IPEndPoint remoteEndPoint = null)
+        private void Send(Message msg, bool checkDuplicate, IPEndPoint remoteEndPoint = null)
         {
             var packet = msg.ToByteArray();
             if (packet.Length > maxPacketSize)
