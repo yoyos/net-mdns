@@ -114,12 +114,17 @@ namespace Makaretu.Dns
                             throw new NotSupportedException($"Address family {address.AddressFamily}.");
                     }
 
-                    receivers.Add(sender);
-
                     log.Debug($"Will send via {localEndpoint}");
                     if (!senders.TryAdd(address, sender)) // Should not fail
                     {
                         sender.Dispose();
+                    }
+                    else
+                    {
+                        // We add the sender also to the list of receivers to be able to receive responses sent as unicast back to the sender instead onto the multicast address.
+                        // Otherwise especially SendUnicastQuery will never trigger AnswerReceived events.
+                        // This makes senders a subset of receivrs.
+                        receivers.Add(sender);
                     }
                 }
                 catch (SocketException ex) when (ex.SocketErrorCode == SocketError.AddressNotAvailable)
@@ -219,7 +224,7 @@ namespace Makaretu.Dns
                     }
                     receivers.Clear();
 
-                    // senders are a subset of reiceivers (listening for answers to unicast queries), so no need to dispose this list.
+                    // senders are a subset of receivers (listening for answers to unicast queries), so no need to dispose this list separately.
                     senders.Clear();
                 }
 
