@@ -14,9 +14,10 @@ namespace Makaretu.Dns
     /// <seealso href="https://tools.ietf.org/html/rfc6763">RFC 6763 DNS-Based Service Discovery</seealso>
     public class ServiceDiscovery : IDisposable
     {
-        static readonly ILog log = LogManager.GetLogger(typeof(ServiceDiscovery));
-        static readonly DomainName LocalDomain = new DomainName("local");
-        static readonly DomainName SubName = new DomainName("_sub");
+        private static readonly ILog log = LogManager.GetLogger(typeof(ServiceDiscovery));
+
+        private static readonly DomainName LocalDomain = new DomainName("local");
+        private static readonly DomainName SubName = new DomainName("_sub");
 
         /// <summary>
         ///   The service discovery service name.
@@ -26,8 +27,8 @@ namespace Makaretu.Dns
         /// </value>
         public static readonly DomainName ServiceName = new DomainName("_services._dns-sd._udp.local");
 
-        readonly bool ownsMdns;
-        List<ServiceProfile> profiles = new List<ServiceProfile>();
+        private readonly bool ownsMdns;
+        private readonly List<ServiceProfile> profiles = new List<ServiceProfile>();
 
         /// <summary>
         ///   Creates a new instance of the <see cref="ServiceDiscovery"/> class.
@@ -322,7 +323,7 @@ namespace Makaretu.Dns
             profiles.ForEach(profile => Unadvertise(profile));
         }
 
-        void OnAnswer(object sender, MessageEventArgs e)
+        private void OnAnswer(object sender, MessageEventArgs e)
         {
             var msg = e.Message;
             if (log.IsDebugEnabled)
@@ -366,7 +367,7 @@ namespace Makaretu.Dns
             }
         }
 
-        void OnQuery(object sender, MessageEventArgs e)
+        private void OnQuery(object sender, MessageEventArgs e)
         {
             var request = e.Message;
 

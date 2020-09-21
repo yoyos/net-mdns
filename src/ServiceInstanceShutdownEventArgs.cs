@@ -1,8 +1,4 @@
-﻿using Makaretu.Dns;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace Makaretu.Dns
 {
     /// <summary>
