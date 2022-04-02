@@ -275,6 +275,13 @@ namespace Makaretu.Dns
 
         void OnNetworkAddressChanged(object sender, EventArgs e) => FindNetworkInterfaces();
 
+        bool DoesNicsHaveSameUnicastAddresses(NetworkInterface nic1, NetworkInterface nic2)
+        {
+            var address1 = string.Join(",",nic1.GetIPProperties().UnicastAddresses.Select(u => u.Address.ToString()));
+            var address2 = string.Join(",",nic2.GetIPProperties().UnicastAddresses.Select(u => u.Address.ToString()));
+            return address1.Equals(address2, StringComparison.CurrentCultureIgnoreCase);
+        }
+
         void FindNetworkInterfaces()
         {
             log.Debug("Finding network interfaces");
@@ -286,7 +293,7 @@ namespace Makaretu.Dns
                 var newNics = new List<NetworkInterface>();
                 var oldNics = new List<NetworkInterface>();
 
-                foreach (var nic in knownNics.Where(k => !currentNics.Any(n => k.Id == n.Id)))
+                foreach (var nic in knownNics.Where(k => currentNics.All(c => k.Id != c.Id || !DoesNicsHaveSameUnicastAddresses(k,c))))
                 {
                     oldNics.Add(nic);
 
@@ -296,7 +303,7 @@ namespace Makaretu.Dns
                     }
                 }
 
-                foreach (var nic in currentNics.Where(nic => !knownNics.Any(k => k.Id == nic.Id)))
+                foreach (var nic in currentNics.Where(c => knownNics.All(k => k.Id != c.Id || !DoesNicsHaveSameUnicastAddresses(k, c))))
                 {
                     newNics.Add(nic);
 
@@ -324,6 +331,7 @@ namespace Makaretu.Dns
                         NetworkInterfaces = newNics
                     });
                 }
+                
 
                 // Magic from @eshvatskyi
                 //
